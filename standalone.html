@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Геодезический Калькулятор</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f172a,#1e3a5f,#0f172a);color:#fff;min-height:100vh}
+header{background:rgba(0,0,0,.3);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.1);padding:16px;text-align:center}
+header h1{font-size:1.5rem;font-weight:bold}
+header h1 span{color:#60a5fa}
+header p{font-size:.8rem;color:#9ca3af;margin-top:4px}
+nav{position:sticky;top:0;z-index:10;background:rgba(0,0,0,.4);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.1)}
+.nav-inner{max-width:900px;margin:0 auto;display:flex;overflow-x:auto;padding:0 8px;scrollbar-width:none}
+.nav-inner::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:12px 16px;font-size:.85rem;font-weight:500;white-space:nowrap;border:none;background:none;color:#9ca3af;border-bottom:2px solid transparent;cursor:pointer;transition:.2s}
+.tab-btn:hover{color:#e5e7eb;border-color:#6b7280}
+.tab-btn.active{color:#60a5fa;border-color:#60a5fa;background:rgba(96,165,250,.1)}
+.tab-btn .icon{font-size:1.1rem}
+main{max-width:900px;margin:0 auto;padding:24px 16px}
+.card{background:rgba(255,255,255,.05);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;margin-bottom:20px}
+.card h2{font-size:1.15rem;font-weight:600;margin-bottom:16px}
+.card h2.blue{color:#93c5fd}
+.card h2.green{color:#86efac}
+.card h2.orange{color:#fdba74}
+.card h2.purple{color:#c4b5fd}
+.shape-btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.shape-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:500;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#9ca3af;cursor:pointer;transition:.2s}
+.shape-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.shape-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6;box-shadow:0 4px 12px rgba(59,130,246,.3)}
+.input-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.input-group label{display:block;font-size:.7rem;color:#9ca3af;margin-bottom:4px}
+.input-group input,.input-group select{width:100%;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:.9rem;outline:none;transition:.2s}
+.input-group input:focus{border-color:#60a5fa;box-shadow:0 0 0 2px rgba(96,165,250,.2)}
+.unit-toggle{display:flex;background:rgba(0,0,0,.3);border-radius:8px;border:1px solid rgba(255,255,255,.2);overflow:hidden}
+.unit-toggle button{padding:10px 16px;font-size:.8rem;font-weight:500;border:none;background:none;color:#9ca3af;cursor:pointer;transition:.2s}
+.unit-toggle button.active{background:#3b82f6;color:#fff}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+.result-card{padding:12px;border-radius:8px;text-align:center}
+.result-card.blue{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2)}
+.result-card.green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2)}
+.result-card.orange{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)}
+.result-card.purple{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2)}
+.result-card .label{font-size:.7rem;color:#9ca3af}
+.result-card .value{font-size:1.2rem;font-weight:bold;color:#fff;margin-top:4px;font-family:monospace;word-break:break-all}
+.result-card .unit{font-size:.65rem;color:#6b7280;margin-top:2px}
+.quick-angles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.quick-angle{padding:4px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;font-size:.75rem;color:#d1d5db;cursor:pointer;transition:.2s}
+.quick-angle:hover{background:rgba(59,130,246,.2);border-color:rgba(96,165,250,.5);color:#93c5fd}
+.info-box{padding:12px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid rgba(255,255,255,.05);margin-top:12px}
+.info-box p{font-size:.75rem;color:#9ca3af;margin-top:2px}
+.info-box p:first-child{margin-top:0}
+table{width:100%;font-size:.8rem;border-collapse:collapse}
+th{padding:8px 10px;text-align:left;color:#9ca3af;border-bottom:1px solid rgba(255,255,255,.1)}
+th.center,td.center{text-align:center}
+td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+tr:hover{background:rgba(255,255,255,.03)}
+.formula-block{padding:12px;background:rgba(0,0,0,.2);border-radius:8px;margin-bottom:10px}
+.formula-block .title{font-weight:600;font-size:.85rem}
+.formula-block .title.blue{color:#93c5fd}
+.formula-block .title.green{color:#86efac}
+.formula-block .title.orange{color:#fdba74}
+.formula-block .title.purple{color:#c4b5fd}
+.formula-block code{display:block;font-size:.8rem;color:#d1d5db;margin-top:4px}
+.formula-block .note{font-size:.7rem;color:#6b7280;margin-top:4px}
+.hidden{display:none}
+footer{background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.1);padding:16px;text-align:center}
+footer p{font-size:.7rem;color:#6b7280}
+.point-box{padding:12px;border-radius:8px}
+.point-box.a{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2)}
+.point-box.b{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2)}
+.point-box .title{font-size:.75rem;margin-bottom:8px}
+.point-box.a .title{color:#93c5fd}
+.point-box.b .title{color:#86efac}
+@media(max-width:600px){
+  header h1{font-size:1.2rem}
+  .result-grid{grid-template-columns:1fr 1fr}
+  .input-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>🌍</span> Геодезический Калькулятор</h1>
+  <p>Тригонометрия • Диагонали • Расстояния • Координаты</p>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button class="tab-btn active" onclick="showTab('trig',this)"><span class="icon">📐</span>Тригонометрия</button>
+    <button class="tab-btn" onclick="showTab('diag',this)"><span class="icon">📏</span>Диагонали</button>
+    <button class="tab-btn" onclick="showTab('dist',this)"><span class="icon">📍</span>Расстояния</button>
+    <button class="tab-btn" onclick="showTab('coord',this)"><span class="icon">🌐</span>Координаты</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ==================== ТРИГОНОМЕТРИЯ ==================== -->
+<div id="tab-trig">
+  <div class="card">
+    <h2 class="blue">📐 Тригонометрические функции</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:16px">
+      <div class="input-group" style="flex:1;min-width:150px">
+        <label>Угол</label>
+        <input type="number" id="trig-angle" value="45" step="any" oninput="calcTrig()">
+      </div>
+      <div class="unit-toggle">
+        <button class="active" id="unit-deg" onclick="setUnit('deg')">Градусы (°)</button>
+        <button id="unit-rad" onclick="setUnit('rad')">Радианы</button>
+      </div>
+    </div>
+    <div class="quick-angles">
+      <span style="font-size:.7rem;color:#6b7280;margin-right:4px">Быстро:</span>
+      <span class="quick-angle" onclick="setAngle(0)">0°</span>
+      <span class="quick-angle" onclick="setAngle(30)">30°</span>
+      <span class="quick-angle" onclick="setAngle(45)">45°</span>
+      <span class="quick-angle" onclick="setAngle(60)">60°</span>
+      <span class="quick-angle" onclick="setAngle(90)">90°</span>
+      <span class="quick-angle" onclick="setAngle(120)">120°</span>
+      <span class="quick-angle" onclick="setAngle(135)">135°</span>
+      <span class="quick-angle" onclick="setAngle(150)">150°</span>
+      <span class="quick-angle" onclick="setAngle(180)">180°</span>
+      <span class="quick-angle" onclick="setAngle(270)">270°</span>
+      <span class="quick-angle" onclick="setAngle(360)">360°</span>
+    </div>
+    <div class="result-grid" id="trig-results"></div>
+    <div class="info-box" id="trig-info"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="green">🔄 Обратные тригонометрические функции</h2>
+    <div class="input-group" style="margin-bottom:16px">
+      <label>Значение</label>
+      <input type="number" id="inv-value" value="0.5" step="any" oninput="calcInverse()">
+    </div>
+    <div class="result-grid" id="inv-results"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="purple">📊 Таблица значений</h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Угол</th><th class="center" style="color:#86efac">sin</th><th class="center" style="color:#93c5fd">cos</th><th class="center" style="color:#fdba74">tan</th><th class="center" style="color:#c4b5fd">cot</th></tr></thead>
+        <tbody id="trig-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ДИАГОНАЛИ ==================== -->
+<div id="tab-diag" class="hidden">
+  <div class="card">
+    <h2 class="blue">📏 Расчёт диагоналей фигур</h2>
+    <div class="shape-btns" id="shape-btns">
+      <button class="shape-btn active" onclick="setShape('rect',this)">▬ Прямоугольник</button>
+      <button class="shape-btn" onclick="setShape('para',this)">◇ Параллелограмм</button>
+      <button class="shape-btn" onclick="setShape('rhomb',this)">◆ Ромб</button>
+      <button class="shape-btn" onclick="setShape('trap',this)">⏢ Трапеция</button>
+      <button class="shape-btn" onclick="setShape('poly',this)">⬡ Многоугольник</button>
+    </div>
+    <div id="shape-content"></div>
+  </div>
+  <div class="card">
+    <h2 class="purple">📖 Формулы диагоналей</h2>
+    <div class="formula-block"><div class="title blue">Прямоугольник</div><code>d = √(a² + b²)</code></div>
+    <div class="formula-block"><div class="title green">Параллелограмм</div><code>d₁ = √(a² + b² − 2ab·cos α)</code><code>d₂ = √(a² + b² + 2ab·cos α)</code><div class="note">d₁² + d₂² = 2(a² + b²)</div></div>
+    <div class="formula-block"><div class="title orange">Ромб</div><code>d₁² + d₂² = 4a²</code><code>a = √((d₁/2)² + (d₂/2)²)</code></div>
+    <div class="formula-block"><div class="title purple">Правильный n-угольник</div><code>dₖ = a · sin(kπ/n) / sin(π/n)</code><div class="note">k = 2, 3, ..., ⌊n/2⌋</div></div>
+  </div>
+</div>
+
+<!-- ==================== РАССТОЯНИЯ ==================== -->
+<div id="tab-dist" class="hidden">
+  <div class="card">
+    <h2 class="blue">📍 Расчёт расстояний</h2>
+    <div class="shape-btns" id="dist-btns">
+      <button class="shape-btn active" onclick="setDistMode('2d',this)">📐 2D</button>
+      <button class="shape-btn" onclick="setDistMode('3d',this)">🧊 3D</button>
+      <button class="shape-btn" onclick="setDistMode('geo',this)">🌍 Геодезическое</button>
+      <button class="shape-btn" onclick="setDistMode('azim',this)">🧭 Дир. угол</button>
+    </div>
+    <div id="dist-content"></div>
+  </div>
+  <div class="card">
+    <h2 class="purple">📖 Формулы</h2>
+    <div class="formula-block"><div class="title blue">Расстояние 2D</div><code>d = √((x₂−x₁)² + (y₂−y₁)²)</code></div>
+    <div class="formula-block"><div class="title green">Расстояние 3D</div><code>d = √((x₂−x₁)² + (y₂−y₁)² + (z₂−z₁)²)</code></div>
+    <div class="formula-block"><div class="title orange">Геодезическое (Haversine)</div><code>a = sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)</code><code>d = 2R·arctan2(√a, √(1−a))</code></div>
+    <div class="formula-block"><div class="title purple">Дирекционный угол</div><code>α = arctan(Δy / Δx)</code><div class="note">С учётом четверти по знакам Δx, Δy</div></div>
+  </div>
+</div>
+
+<!-- ==================== КООРДИНАТЫ ==================== -->
+<div id="tab-coord" class="hidden">
+  <div class="card">
+    <h2 class="blue">🌐 Координатные преобразования</h2>
+    <div class="shape-btns" id="coord-btns">
+      <button class="shape-btn active" onclick="setCoordMode('dms',this)">🔄 Градусы ↔ DMS</button>
+      <button class="shape-btn" onclick="setCoordMode('polar',this)">📊 Полярные ↔ Декартовы</button>
+      <button class="shape-btn" onclick="setCoordMode('intersect',this)">📌 Прямая засечка</button>
+      <button class="shape-btn" onclick="setCoordMode('height',this)">⛰️ Превышения</button>
+    </div>
+    <div id="coord-content"></div>
+  </div>
+  <div class="card">
+    <h2 class="purple">📖 Справочник</h2>
+    <div class="formula-block"><div class="title blue">Формат DMS</div><code>1° = 60′ = 3600″</code><div class="note">Пример: 55°45′20.88″ = 55.7558°</div></div>
+    <div class="formula-block"><div class="title green">Полярные → Декартовы</div><code>x = r · cos θ</code><code>y = r · sin θ</code></div>
+    <div class="formula-block"><div class="title orange">Прямая засечка</div><div class="note">Определение координат точки по двум известным пунктам и измеренным углам</div></div>
+    <div class="formula-block"><div class="title purple">Превышения</div><code>h = D · tg(ν) + i − l</code><div class="note">D — расстояние, ν — угол наклона, i — высота прибора, l — высота визирования</div></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <p>Геодезический Калькулятор © 2026 | Все расчёты выполняются локально</p>
+</footer>
+
+<script>
+// ==================== НАВИГАЦИЯ ====================
+let trigUnit = 'deg';
+let currentShape = 'rect';
+let currentDistMode = '2d';
+let currentCoordMode = 'dms';
+
+function showTab(id, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + id).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ==================== ТРИГОНОМЕТРИЯ ====================
+function setUnit(u) {
+  trigUnit = u;
+  document.getElementById('unit-deg').classList.toggle('active', u === 'deg');
+  document.getElementById('unit-rad').classList.toggle('active', u === 'rad');
+  calcTrig();
+}
+
+function setAngle(v) {
+  document.getElementById('trig-angle').value = v;
+  trigUnit = 'deg';
+  document.getElementById('unit-deg').classList.add('active');
+  document.getElementById('unit-rad').classList.remove('active');
+  calcTrig();
+}
+
+function fmt(v, undef) {
+  if (undef) return '∞ (не определено)';
+  if (!isFinite(v)) return '∞';
+  return parseFloat(v.toFixed(10));
+}
+
+function calcTrig() {
+  const val = parseFloat(document.getElementById('trig-angle').value) || 0;
+  const rad = trigUnit === 'deg' ? val * Math.PI / 180 : val;
+  const deg = trigUnit === 'deg' ? val : val * 180 / Math.PI;
+  const s = Math.sin(rad), c = Math.cos(rad), t = Math.tan(rad);
+  const ct = c / s;
+  const tanUndef = Math.abs(c) < 1e-10;
+  const cotUndef = Math.abs(s) < 1e-10;
+
+  document.getElementById('trig-results').innerHTML = `
+    <div class="result-card green"><div class="label">Синус sin(α)</div><div class="value">${fmt(s)}</div></div>
+    <div class="result-card blue"><div class="label">Косинус cos(α)</div><div class="value">${fmt(c)}</div></div>
+    <div class="result-card orange"><div class="label">Тангенс tan(α)</div><div class="value">${fmt(t, tanUndef)}</div></div>
+    <div class="result-card purple"><div class="label">Котангенс cot(α)</div><div class="value">${fmt(ct, cotUndef)}</div></div>
+  `;
+  document.getElementById('trig-info').innerHTML = `
+    <p><b style="color:#93c5fd">α</b> = ${deg.toFixed(4)}° = ${rad.toFixed(6)} рад</p>
+    <p>sin²α + cos²α = ${(s*s + c*c).toFixed(10)}</p>
+    <p>tan(α) × cot(α) = ${(!tanUndef && !cotUndef) ? (t*ct).toFixed(10) : 'N/A'}</p>
+  `;
+}
+
+function calcInverse() {
+  const v = parseFloat(document.getElementById('inv-value').value) || 0;
+  const asin = Math.abs(v) <= 1 ? (Math.asin(v) * 180 / Math.PI).toFixed(6) + '°' : 'Не определено (|x|>1)';
+  const acos = Math.abs(v) <= 1 ? (Math.acos(v) * 180 / Math.PI).toFixed(6) + '°' : 'Не определено (|x|>1)';
+  const atan = (Math.atan(v) * 180 / Math.PI).toFixed(6) + '°';
+  const acot = v !== 0 ? (Math.atan(1/v) * 180 / Math.PI).toFixed(6) + '°' : '90°';
+
+  document.getElementById('inv-results').innerHTML = `
+    <div class="result-card green"><div class="label">arcsin(x)</div><div class="value">${asin}</div></div>
+    <div class="result-card blue"><div class="label">arccos(x)</div><div class="value">${acos}</div></div>
+    <div class="result-card orange"><div class="label">arctan(x)</div><div class="value">${atan}</div></div>
+    <div class="result-card purple"><div class="label">arccot(x)</div><div class="value">${acot}</div></div>
+  `;
+}
+
+function buildTrigTable() {
+  const tbody = document.getElementById('trig-table');
+  let html = '';
+  [0,15,30,45,60,75,90].forEach(d => {
+    const r = d * Math.PI / 180;
+    const s = Math.sin(r), c = Math.cos(r), t = Math.tan(r), ct = c/s;
+    html += `<tr><td>${d}°</td><td class="center" style="color:#86efac">${s.toFixed(6)}</td><td class="center" style="color:#93c5fd">${c.toFixed(6)}</td><td class="center" style="color:#fdba74">${Math.abs(c)<1e-10?'∞':t.toFixed(6)}</td><td class="center" style="color:#c4b5fd">${Math.abs(s)<1e-10?'∞':ct.toFixed(6)}</td></tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+// ==================== ДИАГОНАЛИ ====================
+function setShape(s, btn) {
+  currentShape = s;
+  document.querySelectorAll('#shape-btns .shape-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShape();
+}
+
+function renderShape() {
+  const el = document.getElementById('shape-content');
+  if (currentShape === 'rect') {
+    el.innerHTML = `
+      <div class="input-grid">
+        <div class="input-group"><label>Сторона a (м)</label><input type="number" id="ra" value="3" step="any" oninput="calcRect()"></div>
+        <div class="input-group"><label>Сторона b (м)</label><input type="number" id="rb" value="4" step="any" oninput="calcRect()"></div>
+      </div>
+      <div class="result-grid" id="rect-res"></div>`;
+    calcRect();
+  } else if (currentShape === 'para') {
+    el.innerHTML = `
+      <div class="input-grid">
+        <div class="input-group"><label>Сторона a (м)</label><input type="number" id="pa" value="5" step="any" oninput="calcPara()"></div>
+        <div class="input-group"><label>Сторона b (м)</label><input type="number" id="pb" value="7" step="any" oninput="calcPara()"></div>
+        <div class="input-group"><label>Угол α (°)</label><input type="number" id="pang" value="60" step="any" oninput="calcPara()"></div>
+      </div>
+      <div class="result-grid" id="para-res"></div>`;
+    calcPara();
+  } else if (currentShape === 'rhomb') {
+    el.innerHTML = `
+      <div class="input-grid">
+        <div class="input-group"><label>Диагональ d₁ (м)</label><input type="number" id="rd1" value="6" step="any" oninput="calcRhomb()"></div>
+        <div class="input-group"><label>Диагональ d₂ (м)</label><input type="number" id="rd2" value="8" step="any" oninput="calcRhomb()"></div>
+      </div>
+      <div class="result-grid" id="rhomb-res"></div>`;
+    calcRhomb();
+  } else if (currentShape === 'trap') {
+    el.innerHTML = `
+      <div class="input-grid">
+        <div class="input-group"><label>Основание a (м)</label><input type="number" id="ta" value="10" step="any" oninput="calcTrap()"></div>
+        <div class="input-group"><label>Основание b (м)</label><input type="number" id="tb" value="6" step="any" oninput="calcTrap()"></div>
+        <div class="input-group"><label>Боковая c (м)</label><input type="number" id="tc" value="5" step="any" oninput="calcTrap()"></div>
+        <div class="input-group"><label>Боковая d (м)</label><input type="number" id="td" value="4" step="any" oninput="calcTrap()"></div>
+      </div>
+      <div class="result-grid" id="trap-res"></div>`;
+    calcTrap();
+  } else if (currentShape === 'poly') {
+    el.innerHTML = `
+      <div class="input-grid">
+        <div class="input-group"><label>Кол-во сторон n</label><input type="number" id="pn" value="6" min="3" step="1" oninput="calcPoly()"></div>
+        <div class="input-group"><label>Длина стороны a (м)</label><input type="number" id="ps" value="5" step="any" oninput="calcPoly()"></div>
+      </div>
+      <div class="result-grid" id="poly-res"></div>
+      <div id="poly-diags"></div>`;
+    calcPoly();
+  }
+}
+
+function calcRect() {
+  const a = parseFloat(document.getElementById('ra').value)||0;
+  const b = parseFloat(document.getElementById('rb').value)||0;
+  const d = Math.sqrt(a*a+b*b), S = a*b, P = 2*(a+b);
+  document.getElementById('rect-res').innerHTML = `
+    <div class="result-card blue"><div class="label">Диагональ d</div><div class="value">${d.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Площадь S</div><div class="value">${S.toFixed(4)}</div><div class="unit">м²</div></div>
+    <div class="result-card purple"><div class="label">Периметр P</div><div class="value">${P.toFixed(4)}</div><div class="unit">м</div></div>`;
+}
+
+function calcPara() {
+  const a = parseFloat(document.getElementById('pa').value)||0;
+  const b = parseFloat(document.getElementById('pb').value)||0;
+  const ang = (parseFloat(document.getElementById('pang').value)||0)*Math.PI/180;
+  const d1 = Math.sqrt(a*a+b*b-2*a*b*Math.cos(ang));
+  const d2 = Math.sqrt(a*a+b*b+2*a*b*Math.cos(ang));
+  const S = a*b*Math.sin(ang);
+  document.getElementById('para-res').innerHTML = `
+    <div class="result-card orange"><div class="label">Диагональ d₁</div><div class="value">${d1.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card purple"><div class="label">Диагональ d₂</div><div class="value">${d2.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Площадь S</div><div class="value">${S.toFixed(4)}</div><div class="unit">м²</div></div>`;
+}
+
+function calcRhomb() {
+  const d1 = parseFloat(document.getElementById('rd1').value)||0;
+  const d2 = parseFloat(document.getElementById('rd2').value)||0;
+  const a = Math.sqrt((d1/2)**2+(d2/2)**2);
+  const S = d1*d2/2, P = 4*a;
+  const ang1 = 2*Math.atan(d2/d1)*180/Math.PI;
+  document.getElementById('rhomb-res').innerHTML = `
+    <div class="result-card blue"><div class="label">Сторона a</div><div class="value">${a.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Площадь S</div><div class="value">${S.toFixed(4)}</div><div class="unit">м²</div></div>
+    <div class="result-card orange"><div class="label">Угол α</div><div class="value">${ang1.toFixed(2)}</div><div class="unit">°</div></div>
+    <div class="result-card purple"><div class="label">Периметр P</div><div class="value">${P.toFixed(4)}</div><div class="unit">м</div></div>`;
+}
+
+function calcTrap() {
+  const a=parseFloat(document.getElementById('ta').value)||0;
+  const b=parseFloat(document.getElementById('tb').value)||0;
+  const c=parseFloat(document.getElementById('tc').value)||0;
+  const d=parseFloat(document.getElementById('td').value)||0;
+  const diff=a-b;
+  const cosA=(c*c+diff*diff-d*d)/(2*c*diff||1);
+  const sinA=Math.sqrt(Math.max(0,1-cosA*cosA));
+  const h=c*sinA;
+  const d1=Math.sqrt(c*c+a*a-2*a*c*cosA);
+  const d2=Math.sqrt(d*d+a*a-2*a*d*(diff*cosA-c*sinA*sinA)/(d||1));
+  const S=(a+b)/2*h;
+  document.getElementById('trap-res').innerHTML = `
+    <div class="result-card orange"><div class="label">Диагональ d₁</div><div class="value">${isFinite(d1)?d1.toFixed(4):'—'}</div><div class="unit">м</div></div>
+    <div class="result-card purple"><div class="label">Диагональ d₂</div><div class="value">${isFinite(d2)?d2.toFixed(4):'—'}</div><div class="unit">м</div></div>
+    <div class="result-card blue"><div class="label">Высота h</div><div class="value">${isFinite(h)?h.toFixed(4):'—'}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Площадь S</div><div class="value">${isFinite(S)?S.toFixed(4):'—'}</div><div class="unit">м²</div></div>`;
+}
+
+function calcPoly() {
+  const n=parseInt(document.getElementById('pn').value)||3;
+  const a=parseFloat(document.getElementById('ps').value)||0;
+  const S=n*a*a/(4*Math.tan(Math.PI/n));
+  const P=n*a;
+  const totalD=n*(n-3)/2;
+  let diags=[];
+  for(let k=2;k<=Math.floor(n/2);k++){
+    const d=a*Math.sin(k*Math.PI/n)/Math.sin(Math.PI/n);
+    diags.push({k,d});
+  }
+  let html=`
+    <div class="result-card green"><div class="label">Площадь S</div><div class="value">${S.toFixed(4)}</div><div class="unit">м²</div></div>
+    <div class="result-card blue"><div class="label">Периметр P</div><div class="value">${P.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card purple"><div class="label">Всего диагоналей</div><div class="value">${totalD}</div><div class="unit">шт</div></div>`;
+  document.getElementById('poly-res').innerHTML=html;
+  let dhtml='<div style="margin-top:16px"><p style="font-size:.75rem;color:#9ca3af;margin-bottom:8px">Длины диагоналей:</p><div class="result-grid">';
+  diags.forEach(di=>{
+    const lbl=di.k===2?'Короткая':(di.k===Math.floor(n/2)&&n%2===0?'Главная':`d${di.k}`);
+    dhtml+=`<div class="result-card orange"><div class="label">${lbl} (k=${di.k})</div><div class="value">${di.d.toFixed(4)}</div><div class="unit">м</div></div>`;
+  });
+  dhtml+='</div></div>';
+  document.getElementById('poly-diags').innerHTML=diags.length?dhtml:'';
+}
+
+// ==================== РАССТОЯНИЯ ====================
+function setDistMode(m, btn) {
+  currentDistMode = m;
+  document.querySelectorAll('#dist-btns .shape-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDist();
+}
+
+function renderDist() {
+  const el = document.getElementById('dist-content');
+  if (currentDistMode === '2d') {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="point-box a"><div class="title">Точка A</div>
+          <div class="input-group"><label>X₁</label><input type="number" id="d2x1" value="0" step="any" oninput="calcDist2D()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y₁</label><input type="number" id="d2y1" value="0" step="any" oninput="calcDist2D()"></div>
+        </div>
+        <div class="point-box b"><div class="title">Точка B</div>
+          <div class="input-group"><label>X₂</label><input type="number" id="d2x2" value="3" step="any" oninput="calcDist2D()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y₂</label><input type="number" id="d2y2" value="4" step="any" oninput="calcDist2D()"></div>
+        </div>
+      </div>
+      <div class="result-grid" id="d2-res"></div>`;
+    calcDist2D();
+  } else if (currentDistMode === '3d') {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="point-box a"><div class="title">Точка A</div>
+          <div class="input-group"><label>X₁</label><input type="number" id="d3x1" value="0" step="any" oninput="calcDist3D()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y₁</label><input type="number" id="d3y1" value="0" step="any" oninput="calcDist3D()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Z₁ (высота)</label><input type="number" id="d3z1" value="0" step="any" oninput="calcDist3D()"></div>
+        </div>
+        <div class="point-box b"><div class="title">Точка B</div>
+          <div class="input-group"><label>X₂</label><input type="number" id="d3x2" value="1" step="any" oninput="calcDist3D()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y₂</label><input type="number" id="d3y2" value="2" step="any" oninput="calcDist3D()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Z₂ (высота)</label><input type="number" id="d3z2" value="2" step="any" oninput="calcDist3D()"></div>
+        </div>
+      </div>
+      <div class="result-grid" id="d3-res"></div>`;
+    calcDist3D();
+  } else if (currentDistMode === 'geo') {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="point-box a"><div class="title">Точка A</div>
+          <div class="input-group"><label>Широта φ₁ (°)</label><input type="number" id="glat1" value="55.7558" step="any" oninput="calcGeo()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Долгота λ₁ (°)</label><input type="number" id="glon1" value="37.6173" step="any" oninput="calcGeo()"></div>
+        </div>
+        <div class="point-box b"><div class="title">Точка B</div>
+          <div class="input-group"><label>Широта φ₂ (°)</label><input type="number" id="glat2" value="59.9343" step="any" oninput="calcGeo()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Долгота λ₂ (°)</label><input type="number" id="glon2" value="30.3351" step="any" oninput="calcGeo()"></div>
+        </div>
+      </div>
+      <div class="result-grid" id="geo-res"></div>
+      <div class="info-box"><p>💡 По умолчанию: Москва → Санкт-Петербург</p></div>`;
+    calcGeo();
+  } else if (currentDistMode === 'azim') {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="point-box a"><div class="title">Станция A</div>
+          <div class="input-group"><label>X₁ (север)</label><input type="number" id="azx1" value="0" step="any" oninput="calcAzim()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y₁ (восток)</label><input type="number" id="azy1" value="0" step="any" oninput="calcAzim()"></div>
+        </div>
+        <div class="point-box b"><div class="title">Цель B</div>
+          <div class="input-group"><label>X₂ (север)</label><input type="number" id="azx2" value="3" step="any" oninput="calcAzim()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y₂ (восток)</label><input type="number" id="azy2" value="4" step="any" oninput="calcAzim()"></div>
+        </div>
+      </div>
+      <div class="result-grid" id="az-res"></div>`;
+    calcAzim();
+  }
+}
+
+function calcDist2D() {
+  const x1=parseFloat(document.getElementById('d2x1').value)||0;
+  const y1=parseFloat(document.getElementById('d2y1').value)||0;
+  const x2=parseFloat(document.getElementById('d2x2').value)||0;
+  const y2=parseFloat(document.getElementById('d2y2').value)||0;
+  const dx=x2-x1, dy=y2-y1;
+  const d=Math.sqrt(dx*dx+dy*dy);
+  const ang=Math.atan2(dy,dx)*180/Math.PI;
+  document.getElementById('d2-res').innerHTML=`
+    <div class="result-card orange"><div class="label">ΔX</div><div class="value">${dx.toFixed(4)}</div></div>
+    <div class="result-card purple"><div class="label">ΔY</div><div class="value">${dy.toFixed(4)}</div></div>
+    <div class="result-card blue"><div class="label">Расстояние d</div><div class="value">${d.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Угол α</div><div class="value">${ang.toFixed(2)}</div><div class="unit">°</div></div>`;
+}
+
+function calcDist3D() {
+  const x1=parseFloat(document.getElementById('d3x1').value)||0;
+  const y1=parseFloat(document.getElementById('d3y1').value)||0;
+  const z1=parseFloat(document.getElementById('d3z1').value)||0;
+  const x2=parseFloat(document.getElementById('d3x2').value)||0;
+  const y2=parseFloat(document.getElementById('d3y2').value)||0;
+  const z2=parseFloat(document.getElementById('d3z2').value)||0;
+  const dx=x2-x1,dy=y2-y1,dz=z2-z1;
+  const d3=Math.sqrt(dx*dx+dy*dy+dz*dz);
+  const d2=Math.sqrt(dx*dx+dy*dy);
+  const nu=Math.atan2(dz,d2)*180/Math.PI;
+  document.getElementById('d3-res').innerHTML=`
+    <div class="result-card orange"><div class="label">ΔX, ΔY, ΔZ</div><div class="value">${dx.toFixed(2)}, ${dy.toFixed(2)}, ${dz.toFixed(2)}</div></div>
+    <div class="result-card blue"><div class="label">Расстояние 3D</div><div class="value">${d3.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card purple"><div class="label">Угол наклона ν</div><div class="value">${nu.toFixed(2)}</div><div class="unit">°</div></div>
+    <div class="result-card green"><div class="label">Гориз. пролож.</div><div class="value">${d2.toFixed(4)}</div><div class="unit">м</div></div>`;
+}
+
+function calcGeo() {
+  const lat1=parseFloat(document.getElementById('glat1').value)||0;
+  const lon1=parseFloat(document.getElementById('glon1').value)||0;
+  const lat2=parseFloat(document.getElementById('glat2').value)||0;
+  const lon2=parseFloat(document.getElementById('glon2').value)||0;
+  const R=6371000;
+  const p1=lat1*Math.PI/180,p2=lat2*Math.PI/180;
+  const dp=(lat2-lat1)*Math.PI/180,dl=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  const dist=R*c;
+  const y=Math.sin(dl)*Math.cos(p2);
+  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  const brg=((Math.atan2(y,x)*180/Math.PI)+360)%360;
+  const bx=Math.cos(p2)*Math.cos(dl),by=Math.cos(p2)*Math.sin(dl);
+  const mLat=Math.atan2(Math.sin(p1)+Math.sin(p2),Math.sqrt((Math.cos(p1)+bx)**2+by**2))*180/Math.PI;
+  const mLon=lon1+Math.atan2(by,Math.cos(p1)+bx)*180/Math.PI;
+  document.getElementById('geo-res').innerHTML=`
+    <div class="result-card orange"><div class="label">Расстояние</div><div class="value">${(dist/1000).toFixed(3)}</div><div class="unit">км (${dist.toFixed(1)} м)</div></div>
+    <div class="result-card blue"><div class="label">Азимут</div><div class="value">${brg.toFixed(4)}</div><div class="unit">°</div></div>
+    <div class="result-card purple"><div class="label">Средняя точка</div><div class="value">${mLat.toFixed(4)}°, ${mLon.toFixed(4)}°</div></div>`;
+}
+
+function calcAzim() {
+  const x1=parseFloat(document.getElementById('azx1').value)||0;
+  const y1=parseFloat(document.getElementById('azy1').value)||0;
+  const x2=parseFloat(document.getElementById('azx2').value)||0;
+  const y2=parseFloat(document.getElementById('azy2').value)||0;
+  const dx=x2-x1,dy=y2-y1;
+  let ang=Math.atan2(dy,dx)*180/Math.PI;
+  if(ang<0)ang+=360;
+  const absDx=Math.abs(dx),absDy=Math.abs(dy);
+  const rumb=Math.atan2(absDy,absDx)*180/Math.PI;
+  let quad='',rname='';
+  if(dx>=0&&dy>=0){quad='I (СВ)';rname=`СВ: ${rumb.toFixed(2)}°`;}
+  else if(dx<0&&dy>=0){quad='II (ЮВ)';rname=`ЮВ: ${(180-rumb).toFixed(2)}°`;}
+  else if(dx<0&&dy<0){quad='III (ЮЗ)';rname=`ЮЗ: ${rumb.toFixed(2)}°`;}
+  else{quad='IV (СЗ)';rname=`СЗ: ${(360-rumb).toFixed(2)}°`;}
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  document.getElementById('az-res').innerHTML=`
+    <div class="result-card orange"><div class="label">Дир. угол α</div><div class="value">${ang.toFixed(4)}</div><div class="unit">°</div></div>
+    <div class="result-card purple"><div class="label">Румб</div><div class="value">${rname}</div></div>
+    <div class="result-card blue"><div class="label">Четверть</div><div class="value">${quad}</div></div>
+    <div class="result-card green"><div class="label">Расстояние</div><div class="value">${dist.toFixed(4)}</div><div class="unit">м</div></div>`;
+}
+
+// ==================== КООРДИНАТЫ ====================
+function setCoordMode(m, btn) {
+  currentCoordMode = m;
+  document.querySelectorAll('#coord-btns .shape-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCoord();
+}
+
+function renderCoord() {
+  const el = document.getElementById('coord-content');
+  if (currentCoordMode === 'dms') {
+    el.innerHTML = `
+      <div style="padding:16px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:8px;margin-bottom:16px">
+        <h3 style="font-size:.85rem;color:#93c5fd;margin-bottom:12px">Десятичные градусы → DMS</h3>
+        <div class="input-group" style="margin-bottom:12px"><label>Десятичные градусы</label><input type="number" id="dec-in" value="55.7558" step="any" oninput="calcDMS()"></div>
+        <div class="result-grid" id="dms-out"></div>
+        <div class="info-box" id="dms-info"></div>
+      </div>
+      <div style="padding:16px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:8px">
+        <h3 style="font-size:.85rem;color:#86efac;margin-bottom:12px">DMS → Десятичные градусы</h3>
+        <div class="input-grid" style="margin-bottom:12px">
+          <div class="input-group"><label>Градусы °</label><input type="number" id="dms-d" value="55" step="1" oninput="calcFromDMS()"></div>
+          <div class="input-group"><label>Минуты ′</label><input type="number" id="dms-m" value="45" step="1" oninput="calcFromDMS()"></div>
+          <div class="input-group"><label>Секунды ″</label><input type="number" id="dms-s" value="20.88" step="any" oninput="calcFromDMS()"></div>
+        </div>
+        <div class="result-grid" id="dms-rev-out"></div>
+      </div>`;
+    calcDMS(); calcFromDMS();
+  } else if (currentCoordMode === 'polar') {
+    el.innerHTML = `
+      <div style="padding:16px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:8px;margin-bottom:16px">
+        <h3 style="font-size:.85rem;color:#93c5fd;margin-bottom:12px">Полярные → Декартовы</h3>
+        <div class="input-grid">
+          <div class="input-group"><label>Радиус r</label><input type="number" id="pol-r" value="5" step="any" oninput="calcPolar()"></div>
+          <div class="input-group"><label>Угол θ (°)</label><input type="number" id="pol-th" value="30" step="any" oninput="calcPolar()"></div>
+        </div>
+        <div class="result-grid" id="pol-out"></div>
+      </div>
+      <div style="padding:16px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:8px">
+        <h3 style="font-size:.85rem;color:#86efac;margin-bottom:12px">Декартовы → Полярные</h3>
+        <div class="input-grid">
+          <div class="input-group"><label>X</label><input type="number" id="cart-x" value="3" step="any" oninput="calcCart()"></div>
+          <div class="input-group"><label>Y</label><input type="number" id="cart-y" value="4" step="any" oninput="calcCart()"></div>
+        </div>
+        <div class="result-grid" id="cart-out"></div>
+      </div>`;
+    calcPolar(); calcCart();
+  } else if (currentCoordMode === 'intersect') {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="point-box a"><div class="title">Пункт A</div>
+          <div class="input-group"><label>X_A</label><input type="number" id="ixA" value="1000" step="any" oninput="calcIntersect()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y_A</label><input type="number" id="iyA" value="1000" step="any" oninput="calcIntersect()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Дир. угол α_A (°)</label><input type="number" id="iaA" value="45" step="any" oninput="calcIntersect()"></div>
+        </div>
+        <div class="point-box b"><div class="title">Пункт B</div>
+          <div class="input-group"><label>X_B</label><input type="number" id="ixB" value="1100" step="any" oninput="calcIntersect()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Y_B</label><input type="number" id="iyB" value="1000" step="any" oninput="calcIntersect()"></div>
+          <div class="input-group" style="margin-top:8px"><label>Дир. угол α_B (°)</label><input type="number" id="iaB" value="135" step="any" oninput="calcIntersect()"></div>
+        </div>
+      </div>
+      <div class="result-grid" id="int-out"></div>`;
+    calcIntersect();
+  } else if (currentCoordMode === 'height') {
+    el.innerHTML = `
+      <div class="input-grid">
+        <div class="input-group"><label>Расстояние D (м)</label><input type="number" id="hD" value="100" step="any" oninput="calcHeight()"></div>
+        <div class="input-group"><label>Угол наклона ν (°)</label><input type="number" id="hV" value="5" step="any" oninput="calcHeight()"></div>
+        <div class="input-group"><label>Высота прибора i (м)</label><input type="number" id="hI" value="1.5" step="any" oninput="calcHeight()"></div>
+        <div class="input-group"><label>Высота визир. l (м)</label><input type="number" id="hL" value="1.5" step="any" oninput="calcHeight()"></div>
+        <div class="input-group"><label>Отметка станции H₀ (м)</label><input type="number" id="hH" value="150" step="any" oninput="calcHeight()"></div>
+      </div>
+      <div class="result-grid" id="h-out"></div>
+      <div class="info-box" id="h-formula"></div>`;
+    calcHeight();
+  }
+}
+
+function calcDMS() {
+  const v=parseFloat(document.getElementById('dec-in').value)||0;
+  const abs=Math.abs(v);
+  const d=Math.floor(abs);
+  const mf=(abs-d)*60;
+  const m=Math.floor(mf);
+  const s=(mf-m)*60;
+  const sign=v<0?'-':'';
+  const rad=v*Math.PI/180;
+  const grad=v*10/9;
+  document.getElementById('dms-out').innerHTML=`
+    <div class="result-card blue"><div class="label">Градусы</div><div class="value">${sign}${d}°</div></div>
+    <div class="result-card green"><div class="label">Минуты</div><div class="value">${m}′</div></div>
+    <div class="result-card orange"><div class="label">Секунды</div><div class="value">${s.toFixed(4)}″</div></div>`;
+  document.getElementById('dms-info').innerHTML=`
+    <p>Результат: ${sign}${d}° ${m}′ ${s.toFixed(2)}″</p>
+    <p>В радианах: ${rad.toFixed(8)} рад | В градах: ${grad.toFixed(6)} gon</p>`;
+}
+
+function calcFromDMS() {
+  const d=parseFloat(document.getElementById('dms-d').value)||0;
+  const m=parseFloat(document.getElementById('dms-m').value)||0;
+  const s=parseFloat(document.getElementById('dms-s').value)||0;
+  const dec=d+m/60+s/3600;
+  const rad=dec*Math.PI/180;
+  document.getElementById('dms-rev-out').innerHTML=`
+    <div class="result-card green"><div class="label">Десятичные градусы</div><div class="value">${dec.toFixed(8)}°</div></div>
+    <div class="result-card blue"><div class="label">Радианы</div><div class="value">${rad.toFixed(8)} рад</div></div>`;
+}
+
+function calcPolar() {
+  const r=parseFloat(document.getElementById('pol-r').value)||0;
+  const th=(parseFloat(document.getElementById('pol-th').value)||0)*Math.PI/180;
+  const x=r*Math.cos(th), y=r*Math.sin(th);
+  document.getElementById('pol-out').innerHTML=`
+    <div class="result-card blue"><div class="label">X</div><div class="value">${x.toFixed(6)}</div></div>
+    <div class="result-card green"><div class="label">Y</div><div class="value">${y.toFixed(6)}</div></div>`;
+}
+
+function calcCart() {
+  const x=parseFloat(document.getElementById('cart-x').value)||0;
+  const y=parseFloat(document.getElementById('cart-y').value)||0;
+  const r=Math.sqrt(x*x+y*y);
+  let th=Math.atan2(y,x)*180/Math.PI;
+  const thPos=th<0?th+360:th;
+  document.getElementById('cart-out').innerHTML=`
+    <div class="result-card green"><div class="label">Радиус r</div><div class="value">${r.toFixed(6)}</div></div>
+    <div class="result-card blue"><div class="label">Угол θ</div><div class="value">${thPos.toFixed(4)}°</div><div class="unit">от +X</div></div>`;
+}
+
+function calcIntersect() {
+  const xA=parseFloat(document.getElementById('ixA').value)||0;
+  const yA=parseFloat(document.getElementById('iyA').value)||0;
+  const xB=parseFloat(document.getElementById('ixB').value)||0;
+  const yB=parseFloat(document.getElementById('iyB').value)||0;
+  const aA=(parseFloat(document.getElementById('iaA').value)||0)*Math.PI/180;
+  const aB=(parseFloat(document.getElementById('iaB').value)||0)*Math.PI/180;
+  const tA=Math.tan(aA),tB=Math.tan(aB);
+  const den=tB-tA;
+  let xP=0,yP=0;
+  if(Math.abs(den)>1e-10){
+    xP=(yA-yB+tB*xB-tA*xA)/den;
+    yP=yA+tA*(xP-xA);
+  }
+  const dAP=Math.sqrt((xP-xA)**2+(yP-yA)**2);
+  const dBP=Math.sqrt((xP-xB)**2+(yP-yB)**2);
+  document.getElementById('int-out').innerHTML=`
+    <div class="result-card orange"><div class="label">X_P</div><div class="value">${isFinite(xP)?xP.toFixed(4):'—'}</div><div class="unit">м</div></div>
+    <div class="result-card purple"><div class="label">Y_P</div><div class="value">${isFinite(yP)?yP.toFixed(4):'—'}</div><div class="unit">м</div></div>
+    <div class="result-card blue"><div class="label">Расст. A→P</div><div class="value">${isFinite(dAP)?dAP.toFixed(4):'—'}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Расст. B→P</div><div class="value">${isFinite(dBP)?dBP.toFixed(4):'—'}</div><div class="unit">м</div></div>`;
+}
+
+function calcHeight() {
+  const D=parseFloat(document.getElementById('hD').value)||0;
+  const V=parseFloat(document.getElementById('hV').value)||0;
+  const i=parseFloat(document.getElementById('hI').value)||0;
+  const l=parseFloat(document.getElementById('hL').value)||0;
+  const H0=parseFloat(document.getElementById('hH').value)||0;
+  const Vr=V*Math.PI/180;
+  const h=D*Math.tan(Vr)+i-l;
+  const Ht=H0+h;
+  const hd=D*Math.cos(Vr);
+  const ucl=hd>0?(h/hd)*1000:0;
+  document.getElementById('h-out').innerHTML=`
+    <div class="result-card orange"><div class="label">Превышение h</div><div class="value">${h.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card blue"><div class="label">Отметка точки</div><div class="value">${Ht.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card green"><div class="label">Гориз. пролож.</div><div class="value">${hd.toFixed(4)}</div><div class="unit">м</div></div>
+    <div class="result-card purple"><div class="label">Уклон</div><div class="value">${ucl.toFixed(2)}</div><div class="unit">‰</div></div>`;
+  document.getElementById('h-formula').innerHTML=`
+    <p>Формула: h = D·tg(ν) + i − l = ${D}·tg(${V}°) + ${i} − ${l} = ${h.toFixed(4)} м</p>
+    <p>H_точки = H₀ + h = ${H0} + ${h.toFixed(4)} = ${Ht.toFixed(4)} м</p>`;
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+calcTrig();
+calcInverse();
+buildTrigTable();
+renderShape();
+renderDist();
+renderCoord();
+</script>
+</body>
+</html>
